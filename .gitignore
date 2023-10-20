@@ -1,2 +1,22 @@
+# ignore python virtual environment
 *.pyc
 venv/
+
+#ignore data files
+/data
+/calibrations
+/txt_files
+/processed_data
+/pyglot
+/summary
+
+#ignore any ppt/png/svg files 
+*.pptx
+*.png
+*.svg
+
+#ignore old scripts (not used anymore now version control)
+/old_scripts
+
+#ignore .DS_store
+.DS_store
