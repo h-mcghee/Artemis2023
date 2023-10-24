@@ -12,18 +12,19 @@ plt.style.use('/Users/harrymcghee/Dropbox (UCL)/2_HMG/Style_files/style')
 
 """load data file and set parameters"""
 
-# tof_window = [3610,3619]
-# tof_window = [3621,3623]
-# tof_window = [3632,3635]
-# tof_window = [3560,3596]
-# tof_window = [3596,3601]
-
-
 isomer = 'cis'
 V = 79
 eBE = [6.1,8.3]
-d_path = 'processed_data/{}_{}V_delay_{}-{}eV.txt'.format(isomer,V,eBE[0],eBE[1])
-data = np.genfromtxt(d_path)
+eBE = [8.3,9.1]
+eBE = [10.4,11.6]
+eBE = [11.8,12.0]
+
+
+in_file = 'processed_data/{}_{}V_delay_{}-{}eV.txt'.format(isomer,V,eBE[0],eBE[1])
+root, extension = os.path.splitext(in_file)
+outfile = root + "_fit.txt"
+
+data = np.genfromtxt(in_file)
 
 x = data[:,0]
 y = data[:,1] / np.max(abs(data[:,1]))
@@ -33,23 +34,19 @@ exp2 = lambda x, t0, sigma, A1, tau1,A2,tau2: conv(x, t0, sigma, A1, tau1,A2,tau
 exp3 = lambda x, t0, sigma, A1, tau1,A2,tau2,A3,tau3: conv(x, t0, sigma, A1, tau1,A2,tau2,A3,tau3)
 exp_only = lambda x, A1, tau1: exp(x, A1, tau1)
 
-# use to truncate data
-# y = y[x>900]
-# x = x[x>900]
-
 model = Model(exp1)
 
 params = Parameters()
-params.add('t0', value=1.31, min=-500,max = 500,vary = True)
-params.add('sigma', value=77,min = 0, vary = True)
-params.add('A1', value = 1, vary = True)
-params.add('tau1', value= 20, vary = True)
+params.add('t0', value=3.7,min = -50,max = 50,vary = False)
+params.add('sigma', value=81,min = 0,vary = False)
+params.add('A1', value = -1,max = 0 ,vary = True)
+params.add('tau1', value= 91000,min = 0,vary = True)
 # params.add('A2', value = 1,min = 0, vary = True)
-# params.add('tau2', value=160000,min = 0, vary = True)
-
-
+# params.add('tau2', value=1386,min = 0, vary = True)
 # params.add('A3', value=0.25, min=0,vary = True)
 # params.add('tau3', value=2435, min=0,vary = True)
+
+init_params = params.copy()
 
 result = model.fit(y, params, x=x)
 # result.params.add('fwhm',2 * np.sqrt(2 * np.log(2)) * result.params['sigma'].value)
@@ -73,7 +70,7 @@ param_names = ['t0', 'sigma']
 
 if components == True:
     gaussian_component = gaussian(x, params[0], params[1])
-    # ax1.fill_between(data[:, 0], gaussian_component, label=r'IRF ($\sigma$ = {:2.2f} fs)'.format(result.params['sigma'].value), linestyle='--',alpha = 0.3)
+    ax1.fill_between(data[:, 0], gaussian_component, label=r'IRF ($\sigma$ = {:2.2f} fs)'.format(result.params['sigma'].value), linestyle='--',alpha = 0.3)
     for i in range(num_params-1):
         A_i = params[2 * i + 2]
         tau_i = params[2 * i + 3]
@@ -83,7 +80,7 @@ if components == True:
 else:
     pass
 
-ax1.set_title(os.path.basename(d_path))
+ax1.set_title(os.path.basename(in_file))
 # plt.xlim(-1000,3000)
 
 plt.xlabel('Delay / fs')
@@ -94,14 +91,21 @@ ax1.legend()
 plt.tight_layout()
 plt.show()
 
-# np.savetxt('processed_data/{}_{}V_delay_{}-{}eV_fit.txt'.format(isomer,V,eBE[0],eBE[1]),result.best_fit)
+# save outfile
 
+with open(outfile, "w") as file:
+    file.write("{}\n".format(os.path.basename(root)))
+    file.write("\nBest Fit Data:\n")
+    np.savetxt(file, np.c_[x, result.best_fit])
+    # Loop through each parameter in the result.params object
+    for param_name, param in result.params.items():
+        file.write("\nParameter: {}\n".format(param_name))
+        file.write("  Initial Value: {}\n".format(param.init_value))
+        file.write("  Fitted Value: {}\n".format(param.value))
+        file.write("  Standard Error: {}\n".format(param.stderr))
+        file.write("  Bounds: ({}, {})\n".format(param.min, param.max))
+        file.write("\n")
 
-
-"""result.params returns dataframe of parameters"""
-
-
-# print(result.fit_report())
 result.params
 
 
