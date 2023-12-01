@@ -11,6 +11,7 @@ venv/
 /paper_figs
 /pyglot
 /summary
+paper_figures.ipynb
 
 #ignore any ppt/png/svg files 
 *.pptx
